@@ -1,0 +1,45 @@
+import os
+from discord.ext.commands import Bot
+from galaxtic import logger, settings
+from galaxtic.db import setup_database
+import discord
+from together import Together
+
+class GalaxticBot(Bot):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, intents=discord.Intents.all(), **kwargs)
+        self.together_client = Together(api_key=settings.AI.TOGETHER_API_KEY)
+
+    async def setup_hook(self):
+        logger.info("Setting up database...")
+        await setup_database()
+        logger.info("Database setup complete")
+        logger.info("Setting up extensions...")
+        ext = [f"galaxtic.cogs.{file[:-3]}" for file in os.listdir("galaxtic/cogs") if file.endswith(".py") and not file.startswith("__")]
+        for cog in ext:
+            try:
+                await self.load_extension(cog)
+                logger.info(f"Loaded extension {cog}")
+            except Exception as e:
+                logger.error(f"Failed to load extension {cog}: {e}")
+        logger.info("Extensions loaded")
+
+        test_guild_id = getattr(settings.DISCORD, 'TEST_GUILD_ID', None)
+        if test_guild_id:
+            guild = discord.Object(id=test_guild_id)
+            slash_commands = await self.tree.sync(guild=guild)
+            logger.info(f"Synced {len(slash_commands)} slash commands to test guild {test_guild_id}")
+        else:
+            slash_commands = await self.tree.sync()
+            logger.info(f"Synced {len(slash_commands)} global slash commands")
+
+    async def on_ready(self):
+        logger.info(f"Logged in as {self.user}")
+        logger.info(f"Synced slash commands: {self.tree.get_commands()}")
+
+
+    def test_commands_available(self):
+        test_guild_id = getattr(settings.DISCORD, 'TEST_GUILD_ID', None)
+        if not test_guild_id:
+            return False
+        return any(cmd for cmd in self.tree.get_commands(guild=discord.Object(id=test_guild_id)))
