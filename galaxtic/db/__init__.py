@@ -11,11 +11,9 @@ async def setup_database() -> None:
     """Initialize database connection"""
     global db
     try:
-        # Initialize the database connection with settings
-        # Note: The URL should be in format "ws://localhost:8000/rpc"
-        db = AsyncSurreal(f"{settings.SURREALDB.URL}/rpc")
+        print("DB URL: ", settings.SURREALDB.URL)
+        db = AsyncSurreal(f"{settings.SURREALDB.URL}")
 
-        # Sign in with root credentials using the correct format
         await db.signin(
             {
                 "username": settings.SURREALDB.USERNAME,
@@ -23,10 +21,8 @@ async def setup_database() -> None:
             }
         )
 
-        # Use the specified namespace and database
         await db.use(settings.SURREALDB.NS, settings.SURREALDB.DB)
 
-        # Test the connection with a simple query
         await db.query("INFO FOR DB;")
 
     except Exception as e:

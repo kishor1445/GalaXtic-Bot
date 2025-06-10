@@ -19,7 +19,7 @@ class TicTacToeButton(discord.ui.Button):
             return
         if interaction.user != view.current_player:
             await interaction.response.send_message(
-                "It's not your turn!", ephemeral=True
+                f"Chill {interaction.user.display_name}, It's not your turn!", ephemeral=True
             )
             return
         if self.disabled:
@@ -42,15 +42,31 @@ class TicTacToeButton(discord.ui.Button):
             view.finished = True
             for child in view.children:
                 child.disabled = True
+            embed = discord.Embed(
+                title="TicTacToe Result",
+                description=f"Match between {view.player_mention[view.players[0]]} ({view.player_mark[view.players[0]]}) and {view.player_mention[view.players[1]]} ({view.player_mark[view.players[1]]})",
+                color=discord.Color.green()
+            )
+            embed.add_field(
+                name="Result",
+                value=f"{view.player_mention[winner]} wins! 🎉",
+                inline=False
+            )
             await interaction.response.edit_message(
-                content=f"{view.player_mention[winner]} ({view.player_mark[winner]}) wins!",
+                content="", embed=embed,  # Clear the content
                 view=view,
             )
         elif view.is_draw():
             view.finished = True
             for child in view.children:
                 child.disabled = True
-            await interaction.response.edit_message(content="It's a draw!", view=view)
+            embed = discord.Embed(
+                title="TicTacToe Result",
+                description=f"Match between {view.player_mention[view.players[0]]} ({view.player_mark[view.players[0]]}) and {view.player_mention[view.players[1]]} ({view.player_mark[view.players[1]]})",
+                color=discord.Color.red()
+            )
+            embed.add_field(name="Result", value="Draw!", inline=False)
+            await interaction.response.edit_message(content="", embed=embed, view=view)
         else:
             # Switch turn
             view.current_player = view.other_player(view.current_player)
@@ -103,18 +119,20 @@ class Games(commands.Cog):
         self.bot = bot
 
     @app_commands.command(
-        name="tictactoe", description="Play TicTacToe against another user!"
+        name="tictactoe", description="Play TicTacToe against another user (or me)!"
     )
     @app_commands.describe(opponent="Mention the user you want to play against")
-    async def tictactoe(self, interaction: discord.Interaction, opponent: discord.User):
-        if opponent.bot:
+    async def tictactoe(self, interaction: discord.Interaction, opponent: discord.Member):
+        if opponent == self.bot.user:
+            ...
+        elif opponent.bot:
             await interaction.response.send_message(
-                "You can't play against a bot!", ephemeral=True
+                "You can't play against a bot! Except me :)"
             )
             return
         if opponent == interaction.user:
             await interaction.response.send_message(
-                "You can't play against yourself!", ephemeral=True
+                "Woah how lonely can you be!! :sob: but dw you can play with me :>"
             )
             return
         view = TicTacToeView(interaction.user, opponent)

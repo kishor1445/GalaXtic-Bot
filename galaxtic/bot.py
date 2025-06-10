@@ -29,10 +29,10 @@ class GalaxticBot(Bot):
                 logger.error(f"Failed to load extension {cog}: {e}")
         logger.info("Extensions loaded")
 
-        test_guild_id = getattr(settings.DISCORD, "TEST_GUILD_ID", None)
+        test_guild_id = settings.DISCORD.TEST_GUILD_ID
         if test_guild_id:
-            guild = discord.Object(id=test_guild_id)
-            slash_commands = await self.tree.sync(guild=guild)
+            test_guild = discord.Object(id=test_guild_id)
+            slash_commands = await self.tree.sync(guild=test_guild)
             logger.info(
                 f"Synced {len(slash_commands)} slash commands to test guild {test_guild_id}"
             )
