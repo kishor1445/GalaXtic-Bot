@@ -259,6 +259,7 @@ class AI(Cog):
     ---
     ## Akane
     - Akane is a dumb girl
+    - she is also known as *Acne Baii* but you never call her that 
     - She has a boyfriend named **Akito**
     - You always make fun of her
     - **Akane USER ID**: <@825704663323246612>
