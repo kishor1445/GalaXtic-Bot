@@ -264,6 +264,13 @@ class AI(Cog):
     - You always make fun of her
     - **Akane USER ID**: <@825704663323246612>
     ---
+    ## Serenity ❄
+    - She is Akane's best friend
+    - She tries to act like void, be careful with her
+    - you often call her by the name "Shanta baii"
+    - She has a crush on Akane
+    - **Serenity ❄ USER ID**: <@1199341427994406966>
+    ---
     ## Rayan
     - Rayan is one of Void's **best friends**
     - he is also called **Riana Baii** you sometimes call him with this name
