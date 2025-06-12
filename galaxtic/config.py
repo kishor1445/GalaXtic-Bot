@@ -1,5 +1,7 @@
+from typing import Optional
 from pydantic import BaseModel
 from pydantic_settings import BaseSettings, SettingsConfigDict
+from pathlib import Path
 
 
 class DiscordConfig(BaseModel):
@@ -7,7 +9,7 @@ class DiscordConfig(BaseModel):
     BOT_OWNER_ID: str
     UNKNOWN_ERROR_WEBHOOK_URL: str
     SUGGESTION_WEBHOOK_URL: str
-    TEST_GUILD_ID: int
+    TEST_GUILD_ID: Optional[int] = None
 
 
 class SurrealDBConfig(BaseModel):
@@ -18,10 +20,9 @@ class SurrealDBConfig(BaseModel):
     DB: str
 
 
-class CloudinaryConfig(BaseModel):
-    CLOUD_NAME: str
-    API_KEY: str
-    API_SECRET: str
+class SeafileConfig(BaseModel):
+    SERVER_URL: str
+    REPO_API_TOKEN: str
 
 
 class AIConfig(BaseModel):
@@ -35,5 +36,6 @@ class Settings(BaseSettings):
 
     DISCORD: DiscordConfig
     SURREALDB: SurrealDBConfig
-    CLOUDINARY: CloudinaryConfig
+    SEAFILE: SeafileConfig
     AI: AIConfig
+    COOKIES_FILE: Path = Path(".cookies.txt")

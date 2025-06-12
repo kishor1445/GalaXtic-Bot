@@ -17,3 +17,5 @@ logs/
 
 .vscode/
 .DS_Store
+.cookies.txt
+

@@ -11,7 +11,6 @@ async def setup_database() -> None:
     """Initialize database connection"""
     global db
     try:
-        print("DB URL: ", settings.SURREALDB.URL)
         db = AsyncSurreal(f"{settings.SURREALDB.URL}")
 
         await db.signin(

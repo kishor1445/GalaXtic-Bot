@@ -292,10 +292,11 @@ class Fun(commands.Cog):
         ]
         logger.info(f"Loaded {len(self.count_cache)} count channels into cache")
 
-        test_guild_id = getattr(settings.DISCORD, "TEST_GUILD_ID", None)
-        test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
-        self.bot.tree.add_command(self.random_choice, guild=test_guild)
-        self.bot.tree.add_command(self.set_count_channel, guild=test_guild)
+        test_guild_id = settings.DISCORD.TEST_GUILD_ID
+        if test_guild_id:
+            test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
+            self.bot.tree.add_command(self.random_choice, guild=test_guild)
+            self.bot.tree.add_command(self.set_count_channel, guild=test_guild)
 
 
 async def setup(bot):

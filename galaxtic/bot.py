@@ -4,12 +4,15 @@ from galaxtic import logger, settings
 from galaxtic.db import setup_database
 import discord
 from together import Together
+from seafileapi import Repo
 
 
 class GalaxticBot(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, intents=discord.Intents.all(), **kwargs)
         self.together_client = Together(api_key=settings.AI.TOGETHER_API_KEY)
+        self.seafile_client = Repo(token=settings.SEAFILE.REPO_API_TOKEN, server_url=settings.SEAFILE.SERVER_URL)
+        self.seafile_client.auth()
 
     async def setup_hook(self):
         logger.info("Setting up database...")
@@ -43,4 +46,3 @@ class GalaxticBot(Bot):
     async def on_ready(self):
         logger.info(f"Logged in as {self.user}")
         logger.info(f"Synced slash commands: {self.tree.get_commands()}")
-

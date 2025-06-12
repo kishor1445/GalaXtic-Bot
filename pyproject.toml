@@ -9,6 +9,7 @@ dependencies = [
     "langchain>=0.3.25",
     "pydantic-settings>=2.9.1",
     "rich>=14.0.0",
+    "seafileapi2>=2.0.1",
     "surrealdb>=1.0.4",
     "together>=1.5.8",
     "yt-dlp>=2025.5.22",

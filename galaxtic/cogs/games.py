@@ -19,7 +19,8 @@ class TicTacToeButton(discord.ui.Button):
             return
         if interaction.user != view.current_player:
             await interaction.response.send_message(
-                f"Chill {interaction.user.display_name}, It's not your turn!", ephemeral=True
+                f"Chill {interaction.user.display_name}, It's not your turn!",
+                ephemeral=True,
             )
             return
         if self.disabled:
@@ -45,15 +46,16 @@ class TicTacToeButton(discord.ui.Button):
             embed = discord.Embed(
                 title="TicTacToe Result",
                 description=f"Match between {view.player_mention[view.players[0]]} ({view.player_mark[view.players[0]]}) and {view.player_mention[view.players[1]]} ({view.player_mark[view.players[1]]})",
-                color=discord.Color.green()
+                color=discord.Color.green(),
             )
             embed.add_field(
                 name="Result",
                 value=f"{view.player_mention[winner]} wins! 🎉",
-                inline=False
+                inline=False,
             )
             await interaction.response.edit_message(
-                content="", embed=embed,  # Clear the content
+                content="",
+                embed=embed,  # Clear the content
                 view=view,
             )
         elif view.is_draw():
@@ -63,7 +65,7 @@ class TicTacToeButton(discord.ui.Button):
             embed = discord.Embed(
                 title="TicTacToe Result",
                 description=f"Match between {view.player_mention[view.players[0]]} ({view.player_mark[view.players[0]]}) and {view.player_mention[view.players[1]]} ({view.player_mark[view.players[1]]})",
-                color=discord.Color.red()
+                color=discord.Color.red(),
             )
             embed.add_field(name="Result", value="Draw!", inline=False)
             await interaction.response.edit_message(content="", embed=embed, view=view)
@@ -122,7 +124,9 @@ class Games(commands.Cog):
         name="tictactoe", description="Play TicTacToe against another user (or me)!"
     )
     @app_commands.describe(opponent="Mention the user you want to play against")
-    async def tictactoe(self, interaction: discord.Interaction, opponent: discord.Member):
+    async def tictactoe(
+        self, interaction: discord.Interaction, opponent: discord.Member
+    ):
         if opponent == self.bot.user:
             ...
         elif opponent.bot:
@@ -145,9 +149,10 @@ class Games(commands.Cog):
     async def cog_load(self):
         from galaxtic import settings
 
-        test_guild_id = getattr(settings.DISCORD, "TEST_GUILD_ID", None)
-        test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
-        self.bot.tree.add_command(self.tictactoe, guild=test_guild)
+        test_guild_id = settings.DISCORD.TEST_GUILD_ID
+        if test_guild_id:
+            test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
+            self.bot.tree.add_command(self.tictactoe, guild=test_guild)
 
 
 async def setup(bot):

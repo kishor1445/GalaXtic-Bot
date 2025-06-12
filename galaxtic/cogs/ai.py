@@ -14,6 +14,21 @@ from datetime import datetime
 from galaxtic.utils.ai import llama_chat
 
 
+@app_commands.context_menu(name="Translate Message")
+@app_commands.describe(message="The message you want to translate")
+async def translate_message(interaction: discord.Interaction, message: discord.Message):
+    await interaction.response.defer()
+    if not message.content:
+        await interaction.followup.send("Message has no content to translate.")
+        return
+    prompt = f"""You are an expert translator. Your task is to translate the provided text into the English language.
+        The translation should be accurate and maintain the original meaning.
+        Format your response as a single, clear translation without explanations or additional text.
+        Translate this text: {message.content}"""
+    response = await llama_chat(interaction.client, prompt=prompt)
+    await interaction.followup.send(response)
+
+
 class AI(Cog):
     def __init__(self, bot: GalaxticBot):
         self.bot = bot
@@ -28,10 +43,31 @@ class AI(Cog):
     #             "No subcommand provided. Use `/help image` to see available subcommands."
     #         )
 
+    @commands.command(name="translate", description="Translate a message")
+    async def translate(self, ctx: commands.Context, *, text: str | None = None):
+        async with ctx.channel.typing():
+            if not text:
+                reply_id = ctx.message.reference.message_id
+                if not reply_id:
+                    await ctx.send(
+                        "Please provide text to translate or reply to a message."
+                    )
+                    return
+                text = (await ctx.channel.fetch_message(reply_id)).content
+                if not text:
+                    await ctx.send("Could not find the message to translate.")
+                    return
+            prompt = f"""You are an expert translator. Your task is to translate the provided text into the English language.
+                The translation should be accurate and maintain the original meaning.
+                Format your response as a single, clear translation without explanations or additional text.
+                Translate this text: {text}"""
+            response = await llama_chat(self.bot, prompt=prompt)
+            await ctx.reply(response)
+
     @commands.command(name="summarize", description="Summarize a text")
     async def summarize(self, ctx: commands.Context, *, text: str | None = None):
         logger.info(f"Summarizing text: {text}")
-        with ctx.typing():
+        async with ctx.typing():
             if not text:
                 reply_id = ctx.message.reference.message_id
                 if not reply_id:
@@ -231,7 +267,7 @@ class AI(Cog):
 
     ## Rayan
     - Rayan is one of Void's **best friends**
-    - A **cute, sleep-deprived genius**, loves **astrology**
+    - A **cute, sleep-deprived genius**, loves **astronomy**
     - Takes good care of his little sister
     - Has **secret feelings for Exo** (you know, but don't spill unless needed)
     - **Rayan USER ID**: <@806079156819066890>
@@ -274,28 +310,30 @@ class AI(Cog):
                 memory.chat_memory.add_message(AIMessage(content=response))
                 await message.reply(response, mention_author=True)
 
-    async def llama_chat(self, prompt: str) -> str:
-        # Use Together Llama for chat
-        chat_msg = [{"role": "user", "content": prompt}]
-        chat_response = await self.bot.loop.run_in_executor(
-            None,
-            lambda: self.bot.together_client.chat.completions.create(
-                model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
-                messages=chat_msg,
-                temperature=0.7,
-                top_p=0.9,
-                top_k=50,
-                repetition_penalty=1.1,
-            ),
-        )
-        return chat_response.choices[0].message.content.strip()
+    # async def llama_chat(self, prompt: str) -> str:
+    #     # Use Together Llama for chat
+    #     chat_msg = [{"role": "user", "content": prompt}]
+    #     chat_response = await self.bot.loop.run_in_executor(
+    #         None,
+    #         lambda: self.bot.together_client.chat.completions.create(
+    #             model="meta-llama/Llama-3.3-70B-Instruct-Turbo-Free",
+    #             messages=chat_msg,
+    #             temperature=0.7,
+    #             top_p=0.9,
+    #             top_k=50,
+    #             repetition_penalty=1.1,
+    #         ),
+    #     )
+    #     return chat_response.choices[0].message.content.strip()
 
     async def cog_load(self):
         # Register the group with the bot's command tree for test guild
-        test_guild_id = getattr(settings.DISCORD, "TEST_GUILD_ID", None)
-        test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
-        self.bot.tree.add_command(self.image, guild=test_guild)
-        self.bot.tree.add_command(self.ai_ask, guild=test_guild)
+        test_guild_id = settings.DISCORD.TEST_GUILD_ID
+        if test_guild_id:
+            test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
+            self.bot.tree.add_command(self.image, guild=test_guild)
+            self.bot.tree.add_command(self.ai_ask, guild=test_guild)
+            self.bot.tree.add_command(translate_message, guild=test_guild)
         # Populate AI channel cache from DB
         db = get_db()
         result = await db.query("SELECT guild_id, channel_id FROM ai_channel")
