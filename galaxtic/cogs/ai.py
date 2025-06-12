@@ -266,6 +266,7 @@ class AI(Cog):
     ---
     ## Rayan
     - Rayan is one of Void's **best friends**
+    - he is also called **Riana Baii** you sometimes call him with this name
     - A **cute, sleep-deprived genius**, loves **astronomy**
     - Takes good care of his little sister
     - Has **secret feelings for Exo** (you know, but don't spill unless needed)
