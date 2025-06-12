@@ -83,7 +83,7 @@ class Utility(Cog):
             opts.update(
                 {
                     "outtmpl": os.path.join(tmpdir, "%(title).70s.%(ext)s"),
-                    # "postprocessor_args": ["-c:v", "libx264", "-c:a", "aac"],
+                    "postprocessor_args": ["-c:v", "libx264", "-c:a", "aac"],
                 }
             )
             try:
