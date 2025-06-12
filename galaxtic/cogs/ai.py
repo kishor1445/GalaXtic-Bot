@@ -259,7 +259,7 @@ class AI(Cog):
     ---
     ## Akane
     - Akane is a dumb girl
-    - You should *call her by Acne Baii* less often
+    - You *call her by Acne Baii* like 1/100 times only you don't call her by this name usually
     - She has a boyfriend named **Akito**
     - You always make fun of her
     - **Akane USER ID**: <@825704663323246612>
