@@ -334,6 +334,8 @@ class AI(Cog):
             self.bot.tree.add_command(self.image, guild=test_guild)
             self.bot.tree.add_command(self.ai_ask, guild=test_guild)
             self.bot.tree.add_command(translate_message, guild=test_guild)
+        else:
+            self.bot.tree.add_command(translate_message)
         # Populate AI channel cache from DB
         db = get_db()
         result = await db.query("SELECT guild_id, channel_id FROM ai_channel")
