@@ -204,9 +204,10 @@ class Anime(commands.Cog):
 
     async def cog_load(self):
         test_guild_id = settings.DISCORD.TEST_GUILD_ID
-        test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
-        self.bot.tree.add_command(self.add_anime, guild=test_guild)
-        self.bot.tree.add_command(self.remove_anime, guild=test_guild)
+        if test_guild_id:
+            test_guild = discord.Object(id=test_guild_id)
+            self.bot.tree.add_command(self.add_anime, guild=test_guild)
+            self.bot.tree.add_command(self.remove_anime, guild=test_guild)
 
 
 class AnimeConfirmView(discord.ui.View):
