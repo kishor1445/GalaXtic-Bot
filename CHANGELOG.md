@@ -1,3 +1,6 @@
+# 0.1.2
+Added `Social Media Embed Fix` -> `/set_media_channel`
+
 # 0.1.1
 
 ## New

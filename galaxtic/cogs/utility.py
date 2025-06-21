@@ -11,7 +11,7 @@ import os
 import aiohttp
 
 ydl_opts = {
-    #"format": "best[ext=mp4][vcodec!=none][acodec!=none]/best",
+    # "format": "best[ext=mp4][vcodec!=none][acodec!=none]/best",
     # "format": "bv*+ba/best",
     "format": "bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best",
     "quiet": True,
@@ -19,6 +19,7 @@ ydl_opts = {
     "cookiefile": settings.COOKIES_FILE,
     "merge_output_format": "mp4",
 }
+
 
 async def get_share_link(path: str) -> str:
     url = f"{settings.SEAFILE.SERVER_URL.rstrip('/')}/api/v2.1/via-repo-token/share-links/"
@@ -28,14 +29,10 @@ async def get_share_link(path: str) -> str:
         "Content-Type": "application/json",
     }
     payload = {
-        "permissions": {
-            "can_edit": False,
-            "can_download": True,
-            "can_upload": False
-        },
+        "permissions": {"can_edit": False, "can_download": True, "can_upload": False},
         "path": path,
     }
-    
+
     async with aiohttp.ClientSession() as session:
         async with session.post(url, headers=headers, json=payload) as resp:
             if resp.status != 200:
@@ -105,35 +102,42 @@ class Utility(Cog):
                     content="❌ No file was downloaded."
                 )
                 return
-            
-            await interaction.edit_original_response(content="Checking the file size...")
+
+            await interaction.edit_original_response(
+                content="Checking the file size..."
+            )
             file_path = os.path.join(tmpdir, files[0])
             file_size = os.path.getsize(file_path)
             logger.info("Checking the file size")
             if file_size <= 10 * 1024 * 1024:
                 # Under 25MB → send directly
-                await interaction.edit_original_response(content="Uploading to discord...")
+                await interaction.edit_original_response(
+                    content="Uploading to discord..."
+                )
                 await interaction.followup.send(
                     file=discord.File(file_path, filename=os.path.basename(file_path))
                 )
                 await interaction.edit_original_response(content="Your file is ready!!")
             else:
                 # Over 10MB → upload to Cloudinary
-                await interaction.edit_original_response(content="File size is > 10M Uploading the file to the cloud stoarge... (this may take a while)")
+                await interaction.edit_original_response(
+                    content="File size is > 10M Uploading the file to the cloud stoarge... (this may take a while)"
+                )
                 logger.info(f"Attempting to upload {file_size/1024/1024:.2f}MB file")
                 try:
                     loop = asyncio.get_running_loop()
                     uploaded = await loop.run_in_executor(
                         None,
                         lambda: self.bot.seafile_client.upload_file(
-                            parent_dir="/",
-                            file_path=file_path
+                            parent_dir="/", file_path=file_path
                         ),
                     )
                     uploaded_file_path = "/" + uploaded["name"]
                     public_url = await get_share_link(uploaded_file_path)
                     if public_url:
-                        await interaction.edit_original_response(content=f"Your file is ready!\n{public_url}")
+                        await interaction.edit_original_response(
+                            content=f"Your file is ready!\n{public_url}"
+                        )
                     else:
                         raise Exception("Cloudinary upload returned no URL.")
                 except Exception as e:

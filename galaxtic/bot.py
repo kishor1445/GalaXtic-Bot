@@ -11,7 +11,10 @@ class GalaxticBot(Bot):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, intents=discord.Intents.all(), **kwargs)
         self.together_client = Together(api_key=settings.AI.TOGETHER_API_KEY)
-        self.seafile_client = Repo(token=settings.SEAFILE.REPO_API_TOKEN, server_url=settings.SEAFILE.SERVER_URL)
+        self.seafile_client = Repo(
+            token=settings.SEAFILE.REPO_API_TOKEN,
+            server_url=settings.SEAFILE.SERVER_URL,
+        )
         self.seafile_client.auth()
 
     async def setup_hook(self):
