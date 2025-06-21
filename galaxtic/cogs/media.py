@@ -101,9 +101,8 @@ class Media(Cog):
     
     def cog_load(self):
         test_guild_id = settings.DISCORD.TEST_GUILD_ID
-        if test_guild_id:
-            test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
-            self.bot.tree.add_command(self.set_media_channel, guild=test_guild)
+        test_guild = discord.Object(id=test_guild_id) if test_guild_id else None
+        self.bot.tree.add_command(self.set_media_channel, guild=test_guild)
 
 
 async def setup(bot):
