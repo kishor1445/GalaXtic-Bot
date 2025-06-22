@@ -8,7 +8,7 @@ def setup_logging():
     log_dir.mkdir(parents=True, exist_ok=True)
 
     logging.basicConfig(
-        level=logging.DEBUG,
+        level=logging.INFO,
         format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
         handlers=[
             RichHandler(
