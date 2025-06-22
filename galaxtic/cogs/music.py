@@ -102,7 +102,7 @@ class Music(Cog):
         elif voice_client.channel != voice_channel:
             await voice_client.move_to(voice_channel)
 
-        query = "ytsearchmusic1: " + song_query
+        query = "ytsearch1: " + song_query
 
         results = await search_ytdlp_async(query, yt_dlp_opts)
         tracks = results.get("entries", [])
