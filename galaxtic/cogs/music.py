@@ -8,7 +8,7 @@ from collections import deque
 SONGS_QUEUE = {}
 
 yt_dlp_opts = {
-    "format": "bestaudio[abr<=96]/bestaudio",
+    "format": "bestaudio[acodec=opus]/bestaudio",
     "noplaylist": True,
     "youtube_include_dash_manifest": False,
     "youtube_include_hls_manifest": False,
@@ -17,7 +17,7 @@ yt_dlp_opts = {
 
 ffmpeg_options = {
     "before_options": "-reconnect 1 -reconnect_streamed 1 -reconnect_delay_max 5",
-    "options": "-vn -c:a libopus -b:a 96k",
+    "options": "-vn -c:a libopus -b:a 384k -vbr on",
 }
 
 ytdl = yt_dlp.YoutubeDL(yt_dlp_opts)
@@ -102,7 +102,7 @@ class Music(Cog):
         elif voice_client.channel != voice_channel:
             await voice_client.move_to(voice_channel)
 
-        query = "ytsearch1: " + song_query
+        query = "ytsearchmusic1: " + song_query
 
         results = await search_ytdlp_async(query, yt_dlp_opts)
         tracks = results.get("entries", [])
