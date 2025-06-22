@@ -15,6 +15,34 @@ class Fun(commands.Cog):
         self.bot = bot
         self._verify_task = None
         self.count_cache = []
+    
+    
+    @commands.command(name="modi_say", aliases=["msay"])
+    @commands.has_role(1386275106350825514)
+    async def modi_say(self, ctx: commands.Context, *, message: str):
+        """Make Modi say something."""
+        await ctx.message.delete()
+        webhooks = await ctx.channel.webhooks()
+        galaxtic_webhook = discord.utils.get(webhooks, name="Galaxtic")
+        if not galaxtic_webhook:
+            galaxtic_webhook = await ctx.channel.create_webhook(name="Galaxtic")
+        await galaxtic_webhook.send(
+            content=message,
+            username="Modi",
+            avatar_url="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Official_Photograph_of_Prime_Minister_Narendra_Modi_Portrait.png/320px-Official_Photograph_of_Prime_Minister_Narendra_Modi_Portrait.png",
+            allowed_mentions=True,
+        )
+    
+    @modi_say.error
+    async def modi_say_error(self, ctx: commands.Context, error: commands.CommandError):
+        if isinstance(error, commands.MissingRole):
+            await ctx.reply(
+                "You do not have permission to use this command.",
+            )
+        else:
+            logger.error(f"Error in modi_say command: {error}")
+            await ctx.send("An error occurred while processing your request.", ephemeral=True)
+        
 
     @app_commands.command(
         name="set_count_channel",
