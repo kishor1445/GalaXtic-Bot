@@ -98,9 +98,7 @@ class Media(Cog):
         db = get_db()
         logger.info(f"Checking if {channel.name} is a media channel.")
         _id = RecordID("guilds", channel.guild.id)
-        print(_id)
         result = await db.select(_id)
-        print(result)
         if not result:
             logger.info(f"No guild data found for {channel.guild.name}.")
             return False

@@ -4,8 +4,11 @@ import asyncio
 import yt_dlp
 import discord
 from collections import deque
+from urllib.parse import quote_plus
+
 
 SONGS_QUEUE = {}
+LOOP_TRACK = {}
 
 yt_dlp_opts = {
     "format": "bestaudio[acodec=opus]/bestaudio",
@@ -89,25 +92,28 @@ class Music(Cog):
         else:
             await ctx.send("The bot is not connected to a voice channel.")
 
-    @command(name="play", help="To play song")
+    @command(name="play", help="To play song", aliases=["p"])
     async def play(self, ctx, *, song_query):
         if not ctx.author.voice:
             await ctx.send("You need to be connected to a voice channel to play music.")
             return
         voice_channel = ctx.author.voice.channel
         voice_client = ctx.guild.voice_client
-
+        msg: discord.Message = await ctx.send(f"Searching for **{song_query}**...")
         if voice_client is None:
             voice_client = await voice_channel.connect()
         elif voice_client.channel != voice_channel:
             await voice_client.move_to(voice_channel)
 
-        query = "ytsearch1: " + song_query
+        query = f"https://music.youtube.com/search?q={quote_plus(song_query)}"
+        search_opts = yt_dlp_opts.copy()
+        search_opts.pop("noplaylist", None)
+        search_opts.update({"playlistend": 1,})
 
-        results = await search_ytdlp_async(query, yt_dlp_opts)
+        results = await search_ytdlp_async(query, search_opts)
         tracks = results.get("entries", [])
         if tracks is None:
-            await ctx.send("No results found for your query.")
+            await msg.edit("No results found for your query.")
             return
 
         first_track = tracks[0]
@@ -123,16 +129,31 @@ class Music(Cog):
         SONGS_QUEUE[guild_id].append(SongData(audio_url, title, thumbnail, duration))
 
         if voice_client.is_playing() or voice_client.is_paused():
-            await ctx.send(f"Added to queue: {title}")
+            await msg.edit(content=f"Added to queue: {title}")
         else:
             await self.play_next_song(voice_client, guild_id, ctx.channel)
 
+    @command(name="loop", help="Toggle looping of the current song")
+    async def loop(self, ctx):
+        voice = ctx.guild.voice_client
+        if voice is None or not (voice.is_playing() or voice.is_paused()):
+            return await ctx.reply("Nothing is playing right now 🤔")
+
+        gid = str(ctx.guild.id)
+        LOOP_TRACK[gid] = not LOOP_TRACK.get(gid, False)
+
+        state = "enabled 🔁" if LOOP_TRACK[gid] else "disabled ⏭️"
+        await ctx.send(f"Loop **{state}** for this song.")
+    
     @command(name="skip", help="Skips the current song")
     async def skip(self, ctx):
         if ctx.guild.voice_client and (
             ctx.guild.voice_client.is_playing() or ctx.guild.voice_client.is_paused()
         ):
-            ctx.guild.voice_client.stop()
+            gid = str(ctx.guild.id)
+            if LOOP_TRACK.get(gid):
+                await ctx.reply("Loop is enabled, skipping will not work. Disable it first.")
+                return
             await ctx.send("Skipped the current song.")
         else:
             await ctx.send("The bot is not playing anything at the moment.")
@@ -172,6 +193,8 @@ class Music(Cog):
         guild_id = str(ctx.guild.id)
         if guild_id in SONGS_QUEUE:
             SONGS_QUEUE[guild_id].clear()
+            
+        LOOP_TRACK.pop(guild_id, None)
 
         if voice_client.is_playing() or voice_client.is_paused():
             voice_client.stop()
@@ -190,6 +213,12 @@ class Music(Cog):
             def after_play(error):
                 if error:
                     print(f"Error occurred while playing audio: {error}")
+                    
+                print(LOOP_TRACK.get(guild_id))
+                
+                if LOOP_TRACK.get(guild_id):
+                    SONGS_QUEUE[guild_id].appendleft(song_data)
+                
                 asyncio.run_coroutine_threadsafe(
                     self.play_next_song(voice_client, guild_id, channel), self.bot.loop
                 )
@@ -200,11 +229,10 @@ class Music(Cog):
                 description=song_data.title,
                 color=discord.Color.blue(),
             )
-            embed.add_field(
-                name="", value=f"**Duration**: {song_data.duration}", inline=True
-            )
+            # If thumbnail is available, set it
             if song_data.thumbnail:
-                embed.set_image(url=song_data.thumbnail)
+                embed.set_thumbnail(url=song_data.thumbnail)
+                
             asyncio.create_task(channel.send(embed=embed))
         else:
             await voice_client.disconnect()

@@ -394,7 +394,7 @@ class EmbedMsg(Cog):
                 f"No embeds found for this server.", ephemeral=True
             )
             return
-        print(embeds)
+        
         if name not in embeds:
             await interaction.followup.send(
                 f"Embed with name `{name}` does not exist.", ephemeral=True
