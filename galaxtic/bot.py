@@ -1,10 +1,11 @@
 import os
 from discord.ext.commands import Bot
 from galaxtic import logger, settings
-from galaxtic.db import setup_database
+from galaxtic.db import setup_database, get_db
 import discord
 from together import Together
 from seafileapi import Repo
+from surrealdb import RecordID
 
 
 class GalaxticBot(Bot):
@@ -49,3 +50,23 @@ class GalaxticBot(Bot):
     async def on_ready(self):
         logger.info(f"Logged in as {self.user}")
         logger.info(f"Synced slash commands: {self.tree.get_commands()}")
+        db = get_db()
+        bot_info = await db.select("bot_info")
+        if not bot_info:
+            await db.create(
+                RecordID("bot_info", self.user.id),
+                {
+                    "number_of_guilds": len(self.guilds),
+                    "guilds_names": [guild.name for guild in self.guilds],
+                }
+            )
+        else:
+            new_info = {
+                "number_of_guilds": len(self.guilds),
+                "guilds_names": [guild.name for guild in self.guilds],
+            }
+            if bot_info != new_info:
+                await db.merge(
+                    RecordID("bot_info", self.user.id),
+                    new_info
+                )
