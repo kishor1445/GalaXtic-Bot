@@ -57,13 +57,11 @@ class GalaxticBot(Bot):
                 RecordID("bot_info", self.user.id),
                 {
                     "number_of_guilds": len(self.guilds),
-                    "guilds_names": [guild.name for guild in self.guilds],
                 }
             )
         else:
             new_info = {
                 "number_of_guilds": len(self.guilds),
-                "guilds_names": [guild.name for guild in self.guilds],
             }
             if bot_info != new_info:
                 await db.merge(
