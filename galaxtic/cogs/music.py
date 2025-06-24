@@ -108,7 +108,11 @@ class Music(Cog):
         query = f"https://music.youtube.com/search?q={quote_plus(song_query)}"
         search_opts = yt_dlp_opts.copy()
         search_opts.pop("noplaylist", None)
-        search_opts.update({"playlistend": 1,})
+        search_opts.update(
+            {
+                "playlistend": 1,
+            }
+        )
 
         results = await search_ytdlp_async(query, search_opts)
         tracks = results.get("entries", [])
@@ -144,7 +148,7 @@ class Music(Cog):
 
         state = "enabled 🔁" if LOOP_TRACK[gid] else "disabled ⏭️"
         await ctx.send(f"Loop **{state}** for this song.")
-    
+
     @command(name="skip", help="Skips the current song")
     async def skip(self, ctx):
         if ctx.guild.voice_client and (
@@ -152,7 +156,9 @@ class Music(Cog):
         ):
             gid = str(ctx.guild.id)
             if LOOP_TRACK.get(gid):
-                await ctx.reply("Loop is enabled, skipping will not work. Disable it first.")
+                await ctx.reply(
+                    "Loop is enabled, skipping will not work. Disable it first."
+                )
                 return
             await ctx.send("Skipped the current song.")
         else:
@@ -193,7 +199,7 @@ class Music(Cog):
         guild_id = str(ctx.guild.id)
         if guild_id in SONGS_QUEUE:
             SONGS_QUEUE[guild_id].clear()
-            
+
         LOOP_TRACK.pop(guild_id, None)
 
         if voice_client.is_playing() or voice_client.is_paused():
@@ -213,12 +219,12 @@ class Music(Cog):
             def after_play(error):
                 if error:
                     print(f"Error occurred while playing audio: {error}")
-                    
+
                 print(LOOP_TRACK.get(guild_id))
-                
+
                 if LOOP_TRACK.get(guild_id):
                     SONGS_QUEUE[guild_id].appendleft(song_data)
-                
+
                 asyncio.run_coroutine_threadsafe(
                     self.play_next_song(voice_client, guild_id, channel), self.bot.loop
                 )
@@ -232,7 +238,7 @@ class Music(Cog):
             # If thumbnail is available, set it
             if song_data.thumbnail:
                 embed.set_thumbnail(url=song_data.thumbnail)
-                
+
             asyncio.create_task(channel.send(embed=embed))
         else:
             await voice_client.disconnect()

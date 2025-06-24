@@ -41,9 +41,7 @@ def dict_to_embed(data: Dict) -> discord.Embed:
 
     # Footer
     if footer := data.get("footer_text"):
-        embed.set_footer(
-            text=footer, icon_url=data.get("footer_icon_url", "")
-        )
+        embed.set_footer(text=footer, icon_url=data.get("footer_icon_url", ""))
 
     # Fields
     for fld in data.get("fields", []):
@@ -168,7 +166,7 @@ class EmbedSectionModal(Modal):
 
     async def on_submit(self, interaction):
         await interaction.response.defer()
-        
+
         if self.section == "title":
             value = self.title_input.value.strip()
             if value:
@@ -212,9 +210,13 @@ class EmbedSectionModal(Modal):
             if raw:
                 raw_no = raw.lstrip("#")
                 try:
-                    self.current["colour"] = int(raw_no, 16) if not raw_no.isdigit() else int(raw_no)
+                    self.current["colour"] = (
+                        int(raw_no, 16) if not raw_no.isdigit() else int(raw_no)
+                    )
                 except ValueError:
-                    await interaction.response.send_message("⚠️ Invalid color value.", ephemeral=True)
+                    await interaction.response.send_message(
+                        "⚠️ Invalid color value.", ephemeral=True
+                    )
                     return
             else:
                 self.current.pop("colour", None)
@@ -249,12 +251,20 @@ class EmbedSectionModal(Modal):
                 # if user cleared all, remove key
                 self.current.pop("fields", None)
 
-        
         await self.db.patch(
             self.rec,
-            [{"op": "replace", "path": f"/embeds/{self.embed_name}", "value": self.current}],
+            [
+                {
+                    "op": "replace",
+                    "path": f"/embeds/{self.embed_name}",
+                    "value": self.current,
+                }
+            ],
         )
-        await self.org_msg.edit(embed=dict_to_embed(self.current), view=self.chooser_view)
+        await self.org_msg.edit(
+            embed=dict_to_embed(self.current), view=self.chooser_view
+        )
+
 
 class SectionChooserView(discord.ui.View):
     def __init__(self, embed_name: str, embed_data: dict, db, rec):
@@ -273,10 +283,10 @@ class SectionChooserView(discord.ui.View):
             ("Color", "color"),
             ("Author", "author"),
             ("Fields", "fields"),
-            ("Cancel", "cancel")
+            ("Cancel", "cancel"),
         ]:
             self.add_item(self.SectionButton(label, section))
-    
+
     async def on_timeout(self):
         if self.msg:
             await self.msg.edit(
@@ -285,15 +295,21 @@ class SectionChooserView(discord.ui.View):
             )
         self.stop()
 
-
     class SectionButton(discord.ui.Button):
         def __init__(self, label, section):
-            super().__init__(label=label, style=discord.ButtonStyle.secondary if label != "Cancel" else discord.ButtonStyle.danger)
+            super().__init__(
+                label=label,
+                style=(
+                    discord.ButtonStyle.secondary
+                    if label != "Cancel"
+                    else discord.ButtonStyle.danger
+                ),
+            )
             self.section = section
 
         async def callback(self, interaction: discord.Interaction):
             view = self.view
-            
+
             if self.section == "cancel":
                 await interaction.response.defer()
                 await view.msg.edit(
@@ -302,7 +318,7 @@ class SectionChooserView(discord.ui.View):
                 )
                 view.stop()
                 return
-            
+
             await interaction.response.send_modal(
                 EmbedSectionModal(
                     self.section,
@@ -356,7 +372,7 @@ class EmbedMsg(Cog):
     @app_commands.describe(name="The name used when you created the embed")
     async def edit_embed(self, interaction: discord.Interaction, name: str):
         await interaction.response.defer()
-        
+
         db = get_db()
         rec = RecordID("guilds", interaction.guild.id)
 
@@ -375,7 +391,7 @@ class EmbedMsg(Cog):
         msg = await interaction.followup.send(
             content=f"🛠️ Editing embed **{name}** — choose a section to modify:",
             embed=preview,
-            view=view
+            view=view,
         )
         view.msg = msg
 
@@ -394,7 +410,7 @@ class EmbedMsg(Cog):
                 f"No embeds found for this server.", ephemeral=True
             )
             return
-        
+
         if name not in embeds:
             await interaction.followup.send(
                 f"Embed with name `{name}` does not exist.", ephemeral=True
