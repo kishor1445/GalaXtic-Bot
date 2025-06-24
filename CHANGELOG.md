@@ -1,3 +1,6 @@
+# 0.1.3
+Removed `AI Enhancement of Anime Description`
+
 # 0.1.2
 Added `Social Media Embed Fix` -> `/set_media_channel`
 
