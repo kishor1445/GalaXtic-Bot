@@ -367,6 +367,28 @@ class EmbedMsg(Cog):
         await interaction.response.send_message(
             f"Embed `{name}` created successfully.", ephemeral=True
         )
+    
+    @embed.command(name="list", description="List all embed entities.")
+    async def list_embeds(self, interaction: discord.Interaction):
+        await interaction.response.defer(ephemeral=True)
+
+        db = get_db()
+        rec = RecordID("guilds", interaction.guild.id)
+        embeds = (await db.query("SELECT VALUE embeds FROM $ref", {"ref": rec}))[0]
+        
+        if not embeds:
+            await interaction.followup.send(
+                "No embeds found for this server.", ephemeral=True
+            )
+            return
+        
+        embed_list = "\n".join(f"- {name}" for name in embeds.keys())
+        embed = discord.Embed(
+            title="Available Embeds",
+            description=embed_list,
+            colour=discord.Colour.blue()
+        )
+        await interaction.followup.send(embed=embed, ephemeral=True)
 
     @embed.command(name="edit", description="Edit an embed entity.")
     @app_commands.describe(name="The name used when you created the embed")
