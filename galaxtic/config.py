@@ -29,12 +29,6 @@ class AIConfig(BaseModel):
     TOGETHER_API_KEY: str
 
 
-class WebshareProxyConfig(BaseModel):
-    username: str
-    password: str
-    ip: str
-    port: str
-
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=(".env", ".env.prod"), env_nested_delimiter="__"
@@ -45,5 +39,4 @@ class Settings(BaseSettings):
     SEAFILE: SeafileConfig
     AI: AIConfig
     COOKIES_FILE: Path = Path(".cookies.txt")
-    WEBSHARE: WebshareProxyConfig | None = None
     

@@ -12,12 +12,41 @@ from langchain_core.messages import HumanMessage, AIMessage
 from collections import defaultdict
 from datetime import datetime
 from galaxtic.utils.ai import llama_chat
-from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.proxies import GenericProxyConfig
 import re
 import asyncio
 from together.error import InvalidRequestError
+import os
+import tempfile
+import yt_dlp
+import webvtt
 
+async def extract_transcript_from_ytdlp_async(url: str) -> str:
+    return await asyncio.get_running_loop().run_in_executor(None, lambda: _extract_vtt_transcript(url))
+
+def _extract_vtt_transcript(url: str) -> str:
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        ydl_opts = {
+            "skip_download": True,
+            "writesubtitles": True,
+            "writeautomaticsub": True,
+            "subtitleslangs": ["en"],
+            "outtmpl": os.path.join(tmp_dir, "%(id)s.%(ext)s"),
+            "quiet": True,
+            "cookiefile": settings.COOKIES_FILE,
+        }
+
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            info = ydl.extract_info(url, download=False)
+            video_id = info.get("id")
+            ydl.download([url])
+
+        for file in os.listdir(tmp_dir):
+            if file.endswith(".vtt") and video_id in file:
+                path = os.path.join(tmp_dir, file)
+                captions = [caption.text for caption in webvtt.read(path)]
+                return "\n".join(captions)
+
+        raise RuntimeError("No subtitles found.")
 
 @app_commands.context_menu(name="Translate Message")
 @app_commands.describe(message="The message you want to translate")
@@ -40,17 +69,17 @@ class AI(Cog):
         self.ai_channel_cache = set()  # (guild_id, channel_id) pairs
         # Use LangChain ConversationBufferMemory for each channel (new API)
         self.channel_memories = defaultdict(lambda: ConversationBufferMemory())
-        if settings.WEBSHARE and settings.WEBSHARE.username and settings.WEBSHARE.password:
-            proxy = GenericProxyConfig(
-                    http_url=f"http://{settings.WEBSHARE.username}:{settings.WEBSHARE.password}@{settings.WEBSHARE.ip}:{settings.WEBSHARE.port}",
-                    https_url=f"https://{settings.WEBSHARE.username}:{settings.WEBSHARE.password}@{settings.WEBSHARE.ip}:{settings.WEBSHARE.port}",
-            )
-        else:
-            proxy = None
-        print(f"Using proxy: {proxy}")
-        self.yt_transcript = YouTubeTranscriptApi(
-            proxy_config=proxy
-        )
+        # if settings.WEBSHARE and settings.WEBSHARE.username and settings.WEBSHARE.password:
+        #     proxy = GenericProxyConfig(
+        #             http_url=f"http://{settings.WEBSHARE.username}:{settings.WEBSHARE.password}@{settings.WEBSHARE.ip}:{settings.WEBSHARE.port}",
+        #             https_url=f"https://{settings.WEBSHARE.username}:{settings.WEBSHARE.password}@{settings.WEBSHARE.ip}:{settings.WEBSHARE.port}",
+        #     )
+        # else:
+        #     proxy = None
+        # print(f"Using proxy: {proxy}")
+        # self.yt_transcript = YouTubeTranscriptApi(
+        #     proxy_config=proxy
+        # )
         
     def extract_video_id(self, url: str) -> str | None:
         match = re.search(r"(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})", url)
@@ -87,7 +116,7 @@ class AI(Cog):
             return "Failed to produce any summaries."
 
         final_prompt = (
-            "Here are partial summaries of a long transcript. Combine them into one final clear and concise summary:\n\n"
+            "Here are partial summaries of a long transcript. Do not mention about transcript only give the summary. Combine them into one final clear and concise summary:\n\n"
             + "\n\n".join(summaries)
         )
         return await llama_chat(self.bot, final_prompt)
@@ -103,10 +132,10 @@ class AI(Cog):
                 return
 
             try:
-                transcript = self.yt_transcript.get_transcript(video_id)
-                transcript_text = "\n".join([entry['text'] for entry in transcript])
-                prompt = f"You are an expert summarizer. Please summarize this YouTube video transcript:\n{transcript_text}"
+                transcript_text = await extract_transcript_from_ytdlp_async(url)
+                prompt = f"You are an expert summarizer. Do not mention about transcript only give the summary. Please summarize this YouTube video transcript:\n{transcript_text}"
                 summary = await llama_chat(self.bot, prompt)
+                await msg.delete()
                 for chunk in self.split_text(summary):
                     await ctx.send(chunk)
                     await asyncio.sleep(1)
