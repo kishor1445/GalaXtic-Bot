@@ -12,6 +12,11 @@ from langchain_core.messages import HumanMessage, AIMessage
 from collections import defaultdict
 from datetime import datetime
 from galaxtic.utils.ai import llama_chat
+from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.formatters import TextFormatter
+import re
+import asyncio
+from together.error import InvalidRequestError
 
 
 @app_commands.context_menu(name="Translate Message")
@@ -35,13 +40,83 @@ class AI(Cog):
         self.ai_channel_cache = set()  # (guild_id, channel_id) pairs
         # Use LangChain ConversationBufferMemory for each channel (new API)
         self.channel_memories = defaultdict(lambda: ConversationBufferMemory())
+        
+    def extract_video_id(self, url: str) -> str | None:
+        match = re.search(r"(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})", url)
+        return match.group(1) if match else None
+    
+    def split_text(self, text: str, limit: int = 2000) -> list[str]:
+        lines = text.split('\n')
+        chunks, current_chunk = [], ""
 
-    # @app_commands.group(name="image", description="Image generation commands")
-    # async def image(self, interaction: discord.Interaction):
-    #     if interaction.subcommand_passed is None:
-    #         await interaction.response.send_message(
-    #             "No subcommand provided. Use `/help image` to see available subcommands."
-    #         )
+        for line in lines:
+            if len(current_chunk) + len(line) + 1 > limit:
+                chunks.append(current_chunk.strip())
+                current_chunk = ""
+            current_chunk += line + "\n"
+        if current_chunk.strip():
+            chunks.append(current_chunk.strip())
+        return chunks
+
+    async def progressive_summary(self, transcript) -> str:
+        transcript_chunks = self.split_text("\n".join(entry['text'] for entry in transcript), 30000)
+        summaries = []
+
+        for i, chunk in enumerate(transcript_chunks):
+            prompt = f"Part {i+1}/{len(transcript_chunks)} of a long transcript:\n{chunk}\n\nPlease summarize this part clearly and briefly."
+            try:
+                response = await llama_chat(self.bot, prompt)
+                summaries.append(response.strip())
+                await asyncio.sleep(1)
+            except Exception as e:
+                logger.exception(f"Failed to summarize chunk {i+1}")
+                continue
+
+        if not summaries:
+            return "Failed to produce any summaries."
+
+        final_prompt = (
+            "Here are partial summaries of a long transcript. Combine them into one final clear and concise summary:\n\n"
+            + "\n\n".join(summaries)
+        )
+        return await llama_chat(self.bot, final_prompt)
+
+    
+    @commands.command(name="summarize_youtube", aliases=['syt', 'summarize_yt'], description="Summarize a YouTube video")
+    async def summarize_youtube(self, ctx: commands.Context, url: str):
+        async with ctx.typing():
+            msg = await ctx.send("Processing...")
+            video_id = self.extract_video_id(url)
+            if not video_id:
+                await msg.edit(content="Invalid YouTube URL.")
+                return
+
+            try:
+                transcript = YouTubeTranscriptApi.get_transcript(video_id)
+                transcript_text = "\n".join([entry['text'] for entry in transcript])
+                prompt = f"You are an expert summarizer. Please summarize this YouTube video transcript:\n{transcript_text}"
+                summary = await llama_chat(self.bot, prompt)
+                for chunk in self.split_text(summary):
+                    await ctx.send(chunk)
+                    await asyncio.sleep(1)
+
+            except InvalidRequestError as e:
+                if "must be <=" in str(e):
+                    try:
+                        summary = await self.progressive_summary(transcript)
+                        await msg.delete()
+                        for chunk in self.split_text(summary):
+                            await ctx.send(chunk)
+                            await asyncio.sleep(1)
+                    except Exception as e:
+                        logger.exception("Failed to summarize progressively.")
+                        await msg.edit(content="Failed.")
+                else:
+                    logger.exception("Unexpected InvalidRequestError")
+                    await msg.edit(content="An error occurred while processing.")
+            except Exception as e:
+                logger.exception("Error during YouTube summarization")
+                await msg.edit(content="An error occurred during summarization.")
 
     @commands.command(name="translate", description="Translate a message")
     async def translate(self, ctx: commands.Context, *, text: str | None = None):

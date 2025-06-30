@@ -1,4 +1,5 @@
 version = 1
+revision = 1
 requires-python = ">=3.12"
 resolution-markers = [
     "python_full_version >= '3.13'",
@@ -263,6 +264,15 @@ wheels = [
 ]
 
 [[package]]
+name = "defusedxml"
+version = "0.7.1"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/0f/d5/c66da9b79e5bdb124974bfe172b4daf3c984ebd9c2a06e2b8a4dc7331c72/defusedxml-0.7.1.tar.gz", hash = "sha256:1bb3032db185915b62d7c6209c5a8792be6a32ab2fedacc84e01b52c51aa3e69", size = 75520 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/07/6c/aa3f2f849e01cb6a001cd8554a88d4c77c5c1a31c95bdf1cf9301e6d9ef4/defusedxml-0.7.1-py2.py3-none-any.whl", hash = "sha256:a352e7e428770286cc899e2542b6cdaedb2b4953ff269a210103ec58f6198a61", size = 25604 },
+]
+
+[[package]]
 name = "discord-py"
 version = "2.5.2"
 source = { registry = "https://pypi.org/simple" }
@@ -349,6 +359,7 @@ dependencies = [
     { name = "seafileapi2" },
     { name = "surrealdb" },
     { name = "together" },
+    { name = "youtube-transcript-api" },
     { name = "yt-dlp" },
 ]
 
@@ -361,6 +372,7 @@ requires-dist = [
     { name = "seafileapi2", specifier = ">=2.0.1" },
     { name = "surrealdb", specifier = ">=1.0.4" },
     { name = "together", specifier = ">=1.5.8" },
+    { name = "youtube-transcript-api", specifier = ">=1.1.0" },
     { name = "yt-dlp", specifier = ">=2025.5.22" },
 ]
 
@@ -1228,6 +1240,19 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/fd/b7/4b3c7c7913a278d445cc6284e59b2e62fa25e72758f888b7a7a39eb8423f/yarl-1.18.3-cp313-cp313-win32.whl", hash = "sha256:61ee62ead9b68b9123ec24bc866cbef297dd266175d53296e2db5e7f797f902d", size = 310152 },
     { url = "https://files.pythonhosted.org/packages/f5/d5/688db678e987c3e0fb17867970700b92603cadf36c56e5fb08f23e822a0c/yarl-1.18.3-cp313-cp313-win_amd64.whl", hash = "sha256:578e281c393af575879990861823ef19d66e2b1d0098414855dd367e234f5b3c", size = 315723 },
     { url = "https://files.pythonhosted.org/packages/f5/4b/a06e0ec3d155924f77835ed2d167ebd3b211a7b0853da1cf8d8414d784ef/yarl-1.18.3-py3-none-any.whl", hash = "sha256:b57f4f58099328dfb26c6a771d09fb20dbbae81d20cfb66141251ea063bd101b", size = 45109 },
+]
+
+[[package]]
+name = "youtube-transcript-api"
+version = "1.1.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "defusedxml" },
+    { name = "requests" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/36/dd/10d413b20a2d14fa483853d0f6d920a0a0a6887d7c60167e4641733f99fb/youtube_transcript_api-1.1.0.tar.gz", hash = "sha256:786d9e64bd7fffee0dbc1471a61a798cebdc379b9cf8f7661d3664e831fcc1a5", size = 470144 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/b3/69/63f1b9f96a9d3b6bd35288fe27f987c41bd157e47b3d07ca025549e3f8e6/youtube_transcript_api-1.1.0-py3-none-any.whl", hash = "sha256:876ac42b1e3f8cc99b81d8fd810bd74ed07511e51dff5db50e714e3156ad3595", size = 485739 },
 ]
 
 [[package]]
