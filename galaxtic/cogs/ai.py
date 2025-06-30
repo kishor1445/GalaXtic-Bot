@@ -13,7 +13,7 @@ from collections import defaultdict
 from datetime import datetime
 from galaxtic.utils.ai import llama_chat
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.formatters import TextFormatter
+from youtube_transcript_api.proxies import WebshareProxyConfig
 import re
 import asyncio
 from together.error import InvalidRequestError
@@ -40,6 +40,12 @@ class AI(Cog):
         self.ai_channel_cache = set()  # (guild_id, channel_id) pairs
         # Use LangChain ConversationBufferMemory for each channel (new API)
         self.channel_memories = defaultdict(lambda: ConversationBufferMemory())
+        self.yt_transcript = YouTubeTranscriptApi(
+            proxy_config=WebshareProxyConfig(
+                proxy_username=settings.WEBSHARE.username,
+                proxy_password=settings.WEBSHARE.password,
+            ) if settings.WEBSHARE else None
+        )
         
     def extract_video_id(self, url: str) -> str | None:
         match = re.search(r"(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})", url)
@@ -92,7 +98,7 @@ class AI(Cog):
                 return
 
             try:
-                transcript = YouTubeTranscriptApi.get_transcript(video_id)
+                transcript = self.yt_transcript.get_transcript(video_id)
                 transcript_text = "\n".join([entry['text'] for entry in transcript])
                 prompt = f"You are an expert summarizer. Please summarize this YouTube video transcript:\n{transcript_text}"
                 summary = await llama_chat(self.bot, prompt)
