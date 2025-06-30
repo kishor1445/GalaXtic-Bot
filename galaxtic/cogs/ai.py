@@ -40,11 +40,16 @@ class AI(Cog):
         self.ai_channel_cache = set()  # (guild_id, channel_id) pairs
         # Use LangChain ConversationBufferMemory for each channel (new API)
         self.channel_memories = defaultdict(lambda: ConversationBufferMemory())
+        if settings.WEBSHARE and settings.WEBSHARE.username and settings.WEBSHARE.password:
+            proxy = WebshareProxyConfig(
+                    proxy_username=settings.WEBSHARE.username,
+                    proxy_password=settings.WEBSHARE.password,
+            )
+        else:
+            proxy = None
+        print(f"Using proxy: {proxy}")
         self.yt_transcript = YouTubeTranscriptApi(
-            proxy_config=WebshareProxyConfig(
-                proxy_username=settings.WEBSHARE.username,
-                proxy_password=settings.WEBSHARE.password,
-            ) if settings.WEBSHARE else None
+            proxy_config=proxy
         )
         
     def extract_video_id(self, url: str) -> str | None:
