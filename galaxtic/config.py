@@ -32,6 +32,8 @@ class AIConfig(BaseModel):
 class WebshareProxyConfig(BaseModel):
     username: str
     password: str
+    ip: str
+    port: str
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(

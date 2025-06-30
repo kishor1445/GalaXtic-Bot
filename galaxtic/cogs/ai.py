@@ -13,7 +13,7 @@ from collections import defaultdict
 from datetime import datetime
 from galaxtic.utils.ai import llama_chat
 from youtube_transcript_api import YouTubeTranscriptApi
-from youtube_transcript_api.proxies import WebshareProxyConfig
+from youtube_transcript_api.proxies import GenericProxyConfig
 import re
 import asyncio
 from together.error import InvalidRequestError
@@ -41,9 +41,9 @@ class AI(Cog):
         # Use LangChain ConversationBufferMemory for each channel (new API)
         self.channel_memories = defaultdict(lambda: ConversationBufferMemory())
         if settings.WEBSHARE and settings.WEBSHARE.username and settings.WEBSHARE.password:
-            proxy = WebshareProxyConfig(
-                    proxy_username=settings.WEBSHARE.username,
-                    proxy_password=settings.WEBSHARE.password,
+            proxy = GenericProxyConfig(
+                    http_url=f"http://{settings.WEBSHARE.username}:{settings.WEBSHARE.password}@{settings.WEBSHARE.ip}:{settings.WEBSHARE.port}",
+                    https_url=f"https://{settings.WEBSHARE.username}:{settings.WEBSHARE.password}@{settings.WEBSHARE.ip}:{settings.WEBSHARE.port}",
             )
         else:
             proxy = None
