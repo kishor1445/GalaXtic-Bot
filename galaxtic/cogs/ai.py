@@ -113,22 +113,33 @@ class AI(Cog):
         return match.group(1) if match else None
     
     def split_text(self, text: str, limit: int = 2000) -> list[str]:
-        lines = text.split('\n')
-        chunks, current_chunk = [], ""
+        chunks = []
+        start = 0
+        while start < len(text):
+            end = start + limit
+            if end >= len(text):
+                chunks.append(text[start:].strip())
+                break
 
-        for line in lines:
-            if len(current_chunk) + len(line) + 1 > limit:
-                chunks.append(current_chunk.strip())
-                current_chunk = ""
-            current_chunk += line + "\n"
-        if current_chunk.strip():
-            chunks.append(current_chunk.strip())
+            # Try to split at the last sentence-ending punctuation within the limit
+            split_point = max(
+                text.rfind(punct, start, end)
+                for punct in (".", "!", "?", " ")
+            )
+
+            if split_point == -1 or split_point <= start:
+                split_point = end  # Hard split
+
+            chunks.append(text[start:split_point].strip())
+            start = split_point
+
         return chunks
 
     async def progressive_summary(self, transcript) -> str:
-        print("Starting progressive summary...")
-        print(f"Transcript: {transcript}")
-        transcript_chunks = self.split_text(transcript, 30000)
+        print(transcript)
+        transcript_chunks = self.split_text(transcript, 20000)
+        print(f"Transcript split into {len(transcript_chunks)} chunks")
+        print(f"Sample chunk: {transcript_chunks[0][:100]}...")  # Print first 100 chars of first chunk
         summaries = []
 
         for i, chunk in enumerate(transcript_chunks):
