@@ -45,6 +45,11 @@ class Fun(commands.Cog):
         name="user_say",
         description="Make the bot say something as a user",
     )
+    @app_commands.describe(
+        user="The user to impersonate",
+        message="The message to send as the user",
+    )
+    @commands.is_owner()
     async def user_say(
         self, interaction: discord.Interaction, user: discord.User, message: str
     ):
@@ -62,6 +67,7 @@ class Fun(commands.Cog):
         )
     
     @commands.command(name="user_say", aliases=["usay"])
+    @commands.is_owner()
     async def user_say_cmd(self, ctx: commands.Context, user: discord.User, *, message: str):
         """Make the bot say something as a user."""
         await ctx.message.delete()
@@ -76,6 +82,23 @@ class Fun(commands.Cog):
             username=user.name,
             avatar_url=user.display_avatar.url,
         )
+    
+    @user_say_cmd.error
+    async def user_say_cmd_error(
+        self, ctx: commands.Context, error: commands.CommandError
+    ):
+        # if not owner 
+        if isinstance(error, commands.NotOwner):
+            await ctx.reply(
+                "You should be the owner of the bot to use this command.",
+            )
+        elif isinstance(error, commands.MissingRequiredArgument):
+            await ctx.reply(
+                "Please provide a user and a message. Usage: `!user_say @user message`"
+            )
+        else:
+            logger.error(f"Error in user_say command: {error}")
+            await ctx.send("An error occurred while processing your request.")
         
 
     @app_commands.command(
