@@ -68,7 +68,6 @@ def _extract_vtt_transcript(url: str) -> str:
             if file.endswith(".vtt") and video_id in file:
                 path = os.path.join(tmp_dir, file)
 
-                # Use webvtt-to-json library to parse and dedupe
                 items = webvtt_json(path, dedupe=True, single=True)
                 lines = [i["line"].strip() for i in items if i.get("line", "").strip()]
                 return " ".join(lines)
@@ -93,20 +92,8 @@ async def translate_message(interaction: discord.Interaction, message: discord.M
 class AI(Cog):
     def __init__(self, bot: GalaxticBot):
         self.bot = bot
-        self.ai_channel_cache = set()  # (guild_id, channel_id) pairs
-        # Use LangChain ConversationBufferMemory for each channel (new API)
+        self.ai_channel_cache = set()
         self.channel_memories = defaultdict(lambda: ConversationBufferMemory())
-        # if settings.WEBSHARE and settings.WEBSHARE.username and settings.WEBSHARE.password:
-        #     proxy = GenericProxyConfig(
-        #             http_url=f"http://{settings.WEBSHARE.username}:{settings.WEBSHARE.password}@{settings.WEBSHARE.ip}:{settings.WEBSHARE.port}",
-        #             https_url=f"https://{settings.WEBSHARE.username}:{settings.WEBSHARE.password}@{settings.WEBSHARE.ip}:{settings.WEBSHARE.port}",
-        #     )
-        # else:
-        #     proxy = None
-        # print(f"Using proxy: {proxy}")
-        # self.yt_transcript = YouTubeTranscriptApi(
-        #     proxy_config=proxy
-        # )
         
     def extract_video_id(self, url: str) -> str | None:
         match = re.search(r"(?:v=|youtu\.be/)([A-Za-z0-9_-]{11})", url)
@@ -166,11 +153,6 @@ class AI(Cog):
     async def summarize_youtube(self, ctx: commands.Context, url: str):
         async with ctx.typing():
             msg = await ctx.send("Processing...")
-            video_id = self.extract_video_id(url)
-            if not video_id:
-                await msg.edit(content="Invalid YouTube URL.")
-                return
-
             try:
                 transcript_text = await extract_transcript_from_ytdlp_async(url)
                 prompt = f"You are an expert summarizer. Do not mention about transcript only give the summary. Please summarize this YouTube video transcript:\n{transcript_text}"
