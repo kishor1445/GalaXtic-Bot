@@ -51,7 +51,7 @@ class Fun(commands.Cog):
     )
     @commands.is_owner()
     async def user_say(
-        self, interaction: discord.Interaction, user: discord.User, message: str
+        self, interaction: discord.Interaction, user: discord.Member, message: str
     ):
         await interaction.response.defer(ephemeral=True)
         
@@ -62,13 +62,13 @@ class Fun(commands.Cog):
         
         await galaxtic_webhook.send(
             content=message,
-            username=user.name,
+            username=user.display_name,
             avatar_url=user.display_avatar.url,
         )
     
     @commands.command(name="user_say", aliases=["usay"])
     @commands.is_owner()
-    async def user_say_cmd(self, ctx: commands.Context, user: discord.User, *, message: str):
+    async def user_say_cmd(self, ctx: commands.Context, user: discord.Member, *, message: str):
         """Make the bot say something as a user."""
         await ctx.message.delete()
         
@@ -79,7 +79,7 @@ class Fun(commands.Cog):
         
         await galaxtic_webhook.send(
             content=message,
-            username=user.name,
+            username=user.display_name,
             avatar_url=user.display_avatar.url,
         )
     
