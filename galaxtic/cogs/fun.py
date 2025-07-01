@@ -40,6 +40,43 @@ class Fun(commands.Cog):
         else:
             logger.error(f"Error in modi_say command: {error}")
             await ctx.send("An error occurred while processing your request.")
+    
+    @app_commands.command(
+        name="user_say",
+        description="Make the bot say something as a user",
+    )
+    async def user_say(
+        self, interaction: discord.Interaction, user: discord.User, message: str
+    ):
+        await interaction.response.defer(ephemeral=True)
+        
+        webhooks = await interaction.channel.webhooks()
+        galaxtic_webhook = discord.utils.get(webhooks, name="Galaxtic")
+        if not galaxtic_webhook:
+            galaxtic_webhook = await interaction.channel.create_webhook(name="Galaxtic")
+        
+        await galaxtic_webhook.send(
+            content=message,
+            username=user.name,
+            avatar_url=user.display_avatar.url,
+        )
+    
+    @commands.command(name="user_say", aliases=["usay"])
+    async def user_say_cmd(self, ctx: commands.Context, user: discord.User, *, message: str):
+        """Make the bot say something as a user."""
+        await ctx.message.delete()
+        
+        webhooks = await ctx.channel.webhooks()
+        galaxtic_webhook = discord.utils.get(webhooks, name="Galaxtic")
+        if not galaxtic_webhook:
+            galaxtic_webhook = await ctx.channel.create_webhook(name="Galaxtic")
+        
+        await galaxtic_webhook.send(
+            content=message,
+            username=user.name,
+            avatar_url=user.display_avatar.url,
+        )
+        
 
     @app_commands.command(
         name="set_count_channel",
