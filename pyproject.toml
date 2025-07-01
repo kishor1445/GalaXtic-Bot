@@ -13,5 +13,5 @@ dependencies = [
     "surrealdb>=1.0.4",
     "together>=1.5.8",
     "webvtt-py>=0.5.1",
-    "yt-dlp>=2025.5.22",
+    "yt-dlp>=2025.6.30",
 ]

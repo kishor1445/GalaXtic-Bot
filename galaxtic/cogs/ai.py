@@ -23,6 +23,30 @@ import webvtt
 async def extract_transcript_from_ytdlp_async(url: str) -> str:
     return await asyncio.get_running_loop().run_in_executor(None, lambda: _extract_vtt_transcript(url))
 
+
+def webvtt_json(path, dedupe, single):
+    captions = webvtt.read(path)
+    dicts = [{"start": c.start, "end": c.end, "lines": c.lines} for c in captions]
+    if dedupe:
+        dicts = []
+        prev_line = None
+        for c in captions:
+            if any("<c>" in l for l in c.lines):
+                continue
+            not_dupe_lines = []
+            for line in c.lines:
+                if not line.strip():
+                    continue
+                if line != prev_line:
+                    not_dupe_lines.append(line)
+                prev_line = line
+            if not_dupe_lines:
+                dicts.append({"start": c.start, "end": c.end, "lines": not_dupe_lines})
+    if single:
+        for d in dicts:
+            d["line"] = "\n".join(d.pop("lines"))
+    return dicts
+
 def _extract_vtt_transcript(url: str) -> str:
     with tempfile.TemporaryDirectory() as tmp_dir:
         ydl_opts = {
@@ -43,8 +67,11 @@ def _extract_vtt_transcript(url: str) -> str:
         for file in os.listdir(tmp_dir):
             if file.endswith(".vtt") and video_id in file:
                 path = os.path.join(tmp_dir, file)
-                captions = [caption.text for caption in webvtt.read(path)]
-                return "\n".join(captions)
+
+                # Use webvtt-to-json library to parse and dedupe
+                items = webvtt_json(path, dedupe=True, single=True)
+                lines = [i["line"].strip() for i in items if i.get("line", "").strip()]
+                return " ".join(lines)
 
         raise RuntimeError("No subtitles found.")
 
@@ -99,7 +126,9 @@ class AI(Cog):
         return chunks
 
     async def progressive_summary(self, transcript) -> str:
-        transcript_chunks = self.split_text("\n".join(entry['text'] for entry in transcript), 30000)
+        print("Starting progressive summary...")
+        print(f"Transcript: {transcript}")
+        transcript_chunks = self.split_text(transcript, 30000)
         summaries = []
 
         for i, chunk in enumerate(transcript_chunks):
