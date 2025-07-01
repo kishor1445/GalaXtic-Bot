@@ -7,17 +7,24 @@ import discord
 from typing import Dict, Tuple, List
 from discord.ui import Modal, TextInput
 from discord import TextStyle, Colour
+from galaxtic.utils.escape import escape_markdown
 
 
-def dict_to_embed(data: Dict) -> discord.Embed:
+def dict_to_embed(data: Dict, user: discord.User | discord.Member | None = None) -> discord.Embed:
     """Build a discord.Embed from the persisted data structure."""
+    print(data)
+    print(user)
     embed = discord.Embed()
 
     if title := data.get("title"):
         embed.title = title
 
     if desc := data.get("description"):
+        if user:
+            desc = desc.replace("{user_mention}", user.mention).replace("{user_name}", escape_markdown(user.name)).replace("{user_id}", str(user.id))
         embed.description = desc
+    else:
+        embed.description = "** ** ** **"
 
     if colour := data.get("colour"):
         try:
@@ -27,6 +34,8 @@ def dict_to_embed(data: Dict) -> discord.Embed:
 
     # Images & thumbnails
     if thumb := data.get("thumbnail_url"):
+        if user and thumb == "{user_avatar}":
+            thumb = user.display_avatar.url
         embed.set_thumbnail(url=thumb)
     if img := data.get("image_url"):
         embed.set_image(url=img)
@@ -262,7 +271,7 @@ class EmbedSectionModal(Modal):
             ],
         )
         await self.org_msg.edit(
-            embed=dict_to_embed(self.current), view=self.chooser_view
+            embed=dict_to_embed(self.current, interaction.user), view=self.chooser_view
         )
 
 
@@ -408,7 +417,7 @@ class EmbedMsg(Cog):
 
         data = embeds[name]
         view = SectionChooserView(name, data, db, rec)
-        preview = dict_to_embed(data)
+        preview = dict_to_embed(data, interaction.user)
 
         msg = await interaction.followup.send(
             content=f"🛠️ Editing embed **{name}** — choose a section to modify:",

@@ -139,11 +139,10 @@ class AI(Cog):
                 for chunk in self.split_text(summary):
                     await ctx.send(chunk)
                     await asyncio.sleep(1)
-
             except InvalidRequestError as e:
                 if "must be <=" in str(e):
                     try:
-                        summary = await self.progressive_summary(transcript)
+                        summary = await self.progressive_summary(transcript_text)
                         await msg.delete()
                         for chunk in self.split_text(summary):
                             await ctx.send(chunk)
